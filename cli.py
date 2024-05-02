@@ -105,106 +105,61 @@ d88P     888  "Y88888  "Y888 "Y88P"   "Y8888P88 888           888
         )
         install_error = True
 
-    print_access_token_instructions = False
+import os
+import click
 
-    # Check for the existence of the .github_access_token file
-    if os.path.exists(".github_access_token"):
-        with open(".github_access_token", "r") as file:
-            github_access_token = file.read().strip()
-            if github_access_token:
-                click.echo(
-                    click.style(
-                        "✅ GitHub access token loaded successfully.", fg="green"
-                    )
-                )
-                # Check if the token has the required permissions
-                import requests
+def validate_github_access_token(github_access_token):
+    # Check if the token has the required permissions
+    import requests
 
-                headers = {"Authorization": f"token {github_access_token}"}
-                response = requests.get("https://api.github.com/user", headers=headers)
-                if response.status_code == 200:
-                    scopes = response.headers.get("X-OAuth-Scopes")
-                    if "public_repo" in scopes or "repo" in scopes:
-                        click.echo(
-                            click.style(
-                                "✅ GitHub access token has the required permissions.",
-                                fg="green",
-                            )
-                        )
-                    else:
-                        install_error = True
-                        click.echo(
-                            click.style(
-                                "❌ GitHub access token does not have the required permissions. Please ensure it has 'public_repo' or 'repo' scope.",
-                                fg="red",
-                            )
-                        )
-                else:
-                    install_error = True
-                    click.echo(
-                        click.style(
-                            "❌ Failed to validate GitHub access token. Please ensure it is correct.",
-                            fg="red",
-                        )
-                    )
-            else:
-                install_error = True
-                click.echo(
-                    click.style(
-                        "❌ GitHub access token file is empty. Please follow the instructions below to set up your GitHub access token.",
-                        fg="red",
-                    )
+    headers = {"Authorization": f"token {github_access_token}"}
+    response = requests.get("https://api.github.com/user", headers=headers)
+    if response.status_code == 200:
+        scopes = response.headers.get("X-OAuth-Scopes")
+        if "public_repo" in scopes or "repo" in scopes:
+            click.echo(
+                click.style(
+                    "✅ GitHub access token has the required permissions.",
+                    fg="green",
                 )
-                print_access_token_instructions = True
+            )
+            return True
+        else:
+            click.echo(
+                click.style(
+                    "❌ GitHub access token does not have the required permissions. Please ensure it has 'public_repo' or 'repo' scope.",
+                    fg="red",
+                )
+            )
+            return False
     else:
-        # Create the .github_access_token file if it doesn't exist
-        with open(".github_access_token", "w") as file:
-            file.write("")
-        install_error = True
-        print_access_token_instructions = True
-
-    if print_access_token_instructions:
-        # Instructions to set up GitHub access token
         click.echo(
             click.style(
-                "💡 To configure your GitHub access token, follow these steps:", fg="red"
-            )
-        )
-        click.echo(
-            click.style("\t1. Ensure you are logged into your GitHub account", fg="red")
-        )
-        click.echo(
-            click.style("\t2. Navigate to https://github.com/settings/tokens", fg="red")
-        )
-        click.echo(click.style("\t3. Click on 'Generate new token'.", fg="red"))
-        click.echo(
-            click.style("\t4. Click on 'Generate new token (classic)'.", fg="red")
-        )
-        click.echo(
-            click.style(
-                "\t5. Fill out the form to generate a new token. Ensure you select the 'repo' scope.",
+                "❌ Failed to validate GitHub access token. Please ensure it is correct.",
                 fg="red",
             )
         )
-        click.echo(
-            click.style(
-                "\t6. Open the '.github_access_token' file in the same directory as this script and paste the token into this file.",
-                fg="red",
-            )
-        )
-        click.echo(
-            click.style("\t7. Save the file and run the setup command again.", fg="red")
-        )
+        return False
 
-    if install_error:
-        click.echo(
-            click.style(
-                "\n\n🔴 If you need help, please raise a ticket on GitHub at https://github.com/Significant-Gravitas/AutoGPT/issues\n\n",
-                fg="magenta",
-                bold=True,
-            )
-        )
+# Prompt user to enter GitHub access token
+github_access_token = click.prompt(
+    click.style("Enter your GitHub access token:", fg="blue"), hide_input=True
+)
 
+# Validate the GitHub access token
+if validate_github_access_token(github_access_token):
+    # Token validation successful, continue with setup
+    # Add your setup logic here
+    pass
+else:
+    # Token validation failed, display error message
+    click.echo(
+        click.style(
+            "\n\n🔴 If you need help, please raise a ticket on GitHub at https://github.com/Significant-Gravitas/AutoGPT/issues\n\n",
+            fg="magenta",
+            bold=True,
+        )
+    )
 
 @cli.group()
 def agent():
